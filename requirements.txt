@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+pandas
+numpy
+statsmodels
+alpha_vantage
+# optional (enables the real LSTM model; without it LSTM falls back to a simple trend estimate)
+# tensorflow

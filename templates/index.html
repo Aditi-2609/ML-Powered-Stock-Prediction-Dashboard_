@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/"><i>M</i> Market Pulse</a>
+    <form class="search" id="go"><input id="q" placeholder="Search symbol or company, press Enter" autocomplete="off" aria-label="Search stocks" /></form>
+    <div class="status"><span class="dot"></span><span id="clock">Live</span></div>
+  </header>
+
+  <div class="tape"><div class="tape-track" id="tape"></div></div>
+
+  <main class="wrap">
+    <section class="summary">
+      <div class="stat"><span>Advancing / declining</span><strong id="breadth-n">–</strong><div class="breadth"><div id="breadth-bar" style="width:50%"></div></div></div>
+      <div class="stat"><span>Top gainer</span><strong id="gainer">–</strong><small id="gainer-s"></small></div>
+      <div class="stat"><span>Top loser</span><strong id="loser">–</strong><small id="loser-s"></small></div>
+      <div class="stat"><span>Average move</span><strong id="avg">–</strong><small>across all listed stocks</small></div>
+    </section>
+
+    <div class="board-head">
+      <h1>Market board</h1>
+      <div class="tabs" id="tabs">
+        <button class="on" data-f="all">All</button>
+        <button data-f="US">US</button>
+        <button data-f="IN">India</button>
+        <button data-f="up">Gainers</button>
+        <button data-f="down">Losers</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-k="symbol">Symbol</th>
+            <th style="cursor:default">30 days</th>
+            <th data-k="price">Last price</th>
+            <th data-k="change">Change</th>
+            <th data-k="pct" class="on">% change</th>
+            <th data-k="volume">Volume</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="foot">Select a stock to open its candlestick chart and forecast. Prices update every 2 seconds. Data is simulated unless an Alpha Vantage key is configured.</p>
+  </main>
+
+  <script>
+    let stocks = {{ stocks | tojson }};
+    const spark = Object.fromEntries(stocks.map(s => [s.symbol, s.spark]));
+    let filter = 'all', sortKey = 'pct', asc = false, query = '';
+    const prev = {};
+
+    const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const compact = n => Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(n);
+    const cls = n => n >= 0 ? 'up' : 'down';
+    const sign = n => n >= 0 ? '+' : '';
+
+    function sparkline(values, color) {
+      const w = 96, h = 28, min = Math.min(...values), max = Math.max(...values), r = max - min || 1;
+      const pts = values.map((v, i) => `${(i / (values.length - 1) * w).toFixed(1)},${(h - 2 - (v - min) / r * (h - 4)).toFixed(1)}`).join(' ');
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+    }
+
+    function visible() {
+      let list = stocks.filter(s => {
+        if (filter === 'US' || filter === 'IN') return s.market === filter;
+        if (filter === 'up') return s.change >= 0;
+        if (filter === 'down') return s.change < 0;
+        return true;
+      });
+      if (query) list = list.filter(s => (s.symbol + ' ' + s.name).toLowerCase().includes(query));
+      return list.sort((a, b) => {
+        const x = a[sortKey], y = b[sortKey];
+        const c = typeof x === 'string' ? x.localeCompare(y) : x - y;
+        return asc ? c : -c;
+      });
+    }
+
+    function render() {
+      const list = visible();
+      document.getElementById('rows').innerHTML = list.map(s => {
+        const color = s.change >= 0 ? '#2fbf8a' : '#f2545b';
+        const series = [...spark[s.symbol].slice(0, -1), s.price];
+        return `<tr data-s="${s.symbol}" tabindex="0">
+          <td><div class="sym"><div class="badge">${s.symbol.slice(0, 2)}</div><div><b>${s.symbol}</b><small>${s.name}</small></div></div></td>
+          <td>${sparkline(series, color)}</td>
+          <td class="num"><span class="px" data-px="${s.symbol}">${s.currency}${fmt(s.price)}</span></td>
+          <td class="num ${cls(s.change)}">${sign(s.change)}${fmt(s.change)}</td>
+          <td><span class="chg num ${cls(s.pct)}">${sign(s.pct)}${fmt(s.pct)}%</span></td>
+          <td class="num muted">${compact(s.volume)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="6" class="muted" style="text-align:center;padding:32px">No stocks match. Clear the search or pick another filter.</td></tr>';
+      document.querySelectorAll('th[data-k]').forEach(th => {
+        th.classList.toggle('on', th.dataset.k === sortKey);
+        th.classList.toggle('asc', th.dataset.k === sortKey && asc);
+      });
+    }
+
+    function summary() {
+      const up = stocks.filter(s => s.change >= 0).length;
+      document.getElementById('breadth-n').innerHTML = `<span class="up">${up}</span> / <span class="down">${stocks.length - up}</span>`;
+      document.getElementById('breadth-bar').style.width = (up / stocks.length * 100) + '%';
+      const sorted = [...stocks].sort((a, b) => b.pct - a.pct), g = sorted[0], l = sorted[sorted.length - 1];
+      document.getElementById('gainer').innerHTML = `${g.symbol} <span class="${cls(g.pct)}">${sign(g.pct)}${fmt(g.pct)}%</span>`;
+      document.getElementById('gainer-s').textContent = g.name;
+      document.getElementById('loser').innerHTML = `${l.symbol} <span class="${cls(l.pct)}">${sign(l.pct)}${fmt(l.pct)}%</span>`;
+      document.getElementById('loser-s').textContent = l.name;
+      const avg = stocks.reduce((a, s) => a + s.pct, 0) / stocks.length;
+      document.getElementById('avg').innerHTML = `<span class="${cls(avg)}">${sign(avg)}${fmt(avg)}%</span>`;
+      const items = stocks.map(s => `<a href="/stock/${s.symbol}"><b>${s.symbol}</b><span class="num">${s.currency}${fmt(s.price)}</span><span class="num ${cls(s.pct)}">${sign(s.pct)}${fmt(s.pct)}%</span></a>`).join('');
+      document.getElementById('tape').innerHTML = items + items;
+    }
+
+    async function tick() {
+      try {
+        const data = await (await fetch('/api/quotes')).json();
+        data.forEach(n => { prev[n.symbol] = stocks.find(s => s.symbol === n.symbol)?.price; });
+        stocks = data;
+        render(); summary();
+        stocks.forEach(s => {
+          const p = prev[s.symbol];
+          if (p === undefined || p === s.price) return;
+          const el = document.querySelector(`[data-px="${s.symbol}"]`);
+          if (!el) return;
+          el.classList.add(s.price > p ? 'flash-up' : 'flash-down');
+          requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('flash-up', 'flash-down')));
+        });
+        document.getElementById('clock').textContent = 'Live · ' + data[0].updated;
+      } catch (e) {
+        document.getElementById('clock').textContent = 'Reconnecting…';
+      }
+    }
+
+    const open = e => { const tr = e.target.closest('tr[data-s]'); if (tr) location.href = '/stock/' + tr.dataset.s; };
+    document.getElementById('rows').addEventListener('click', open);
+    document.getElementById('rows').addEventListener('keydown', e => { if (e.key === 'Enter') open(e); });
+    document.getElementById('tabs').addEventListener('click', e => {
+      if (!e.target.dataset.f) return;
+      filter = e.target.dataset.f;
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b === e.target));
+      render();
+    });
+    document.querySelectorAll('th[data-k]').forEach(th => th.addEventListener('click', () => {
+      asc = sortKey === th.dataset.k ? !asc : th.dataset.k === 'symbol';
+      sortKey = th.dataset.k; render();
+    }));
+    document.getElementById('q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+    document.getElementById('go').addEventListener('submit', e => {
+      e.preventDefault();
+      const v = document.getElementById('q').value.trim().toUpperCase();
+      if (v) location.href = '/stock/' + encodeURIComponent(v);
+    });
+
+    render(); summary();
+    setInterval(tick, 2000);
+  </script>
+</body>
+</html>
