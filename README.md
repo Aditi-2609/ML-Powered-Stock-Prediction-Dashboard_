@@ -1,17 +1,185 @@
-# Market Pulse
+# 📈 ML-Powered Stock Prediction Dashboard
 
-FastAPI stock dashboard: live-style market board, candlestick charts, ARIMA / LSTM next-close forecasts.
+An end-to-end **machine learning and time-series forecasting dashboard** that collects historical stock market data, processes it for predictive modeling, generates future price/trend predictions, and presents the results through an interactive web interface.
 
-## Run
-```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-./start.sh            # or: uvicorn main:app --reload
+The project combines **Python-based machine learning, time-series data processing, backend development, database management, and frontend visualization** into a single application.
+
+---
+
+## 🚀 Project Overview
+
+Stock prices are time-dependent data influenced by historical price movements and market patterns. This project explores the use of **machine learning for time-series forecasting** by using historical stock market data to identify patterns and generate predictions for future stock behavior.
+
+The application provides a dashboard where users can:
+
+* Search and view stock information
+* Collect and store historical stock data
+* Process time-series data for machine learning
+* Generate predictions using the implemented ML model
+* Visualize historical and predicted stock trends
+* Interact with the prediction results through a web dashboard
+
+The main objective is to demonstrate an **end-to-end ML pipeline**, from raw financial data collection to model-based prediction and visualization.
+
+---
+
+## 🧠 Machine Learning Pipeline
+
+The core of the project follows this workflow:
+
+```text
+Historical Stock Data
+        ↓
+Data Collection
+        ↓
+Data Cleaning & Preprocessing
+        ↓
+Time-Series Feature Preparation
+        ↓
+ML Model
+        ↓
+Model Training / Prediction
+        ↓
+Future Stock Prediction
+        ↓
+Dashboard Visualization
 ```
-Open http://localhost:8000
 
-## Data
-- History is stored in `stocks.db` (SQLite) and created automatically on first run.
-- Without an API key the app uses generated demo data with simulated live ticks.
-- For real US daily candles: `export ALPHA_VANTAGE_KEY=your_key` (Alpha Vantage free tier, 25 requests/day).
-- LSTM needs `tensorflow` (uncomment it in requirements.txt); without it a simple trend fallback is used.
+### Key ML Components
+
+* **Time-Series Forecasting:** Historical stock prices are treated as sequential/time-dependent data.
+* **Data Preprocessing:** Raw market data is cleaned and transformed into a format suitable for model training.
+* **Feature Preparation:** Historical observations are converted into model-ready input sequences/features.
+* **Model Training:** A machine learning model is trained on historical stock data.
+* **Prediction:** The trained model generates predictions for future stock movement/price.
+* **Visualization:** Actual and predicted values are presented through the dashboard for easier interpretation.
+
+---
+
+## 🛠️ Tech Stack
+
+### Machine Learning & Data Science
+
+* Python
+* Pandas
+* NumPy
+* Scikit-learn
+* Time-Series Forecasting / Machine Learning
+
+### Backend
+
+* Python
+* Flask
+* REST APIs
+
+### Database
+
+* SQLite
+
+### Frontend
+
+* HTML
+* CSS
+* JavaScript
+* Chart-based data visualization
+
+### Development
+
+* Git
+* GitHub
+* VS Code
+
+---
+
+## ✨ Key Features
+
+### 📊 Stock Data Collection
+
+Fetches and processes historical stock market data for analysis and prediction.
+
+### 🤖 Machine Learning Prediction
+
+Uses a machine learning/time-series forecasting approach to learn patterns from historical stock data and generate future predictions.
+
+### 📈 Interactive Visualization
+
+Displays historical and predicted stock values through charts, making model output easier to understand.
+
+### 💾 Data Persistence
+
+Stores relevant stock information and application data using SQLite.
+
+### 🌐 Web Dashboard
+
+Provides a user-friendly interface for interacting with stock data and prediction results.
+
+---
+
+## 📁 Project Structure
+
+```text
+stock-dashboard/
+│
+├── static/
+│   └── styles.css
+│
+├── templates/
+│   ├── index.html
+│   └── stock.html
+│
+├── data_collector.py       # Stock data collection & processing
+├── main.py                 # Flask application & routes
+├── models.py               # ML/model-related implementation
+│
+├── requirements.txt        # Python dependencies
+├── README.md
+├── .gitignore
+├── start.sh
+└── stocks.db               # Local/sample database
+```
+
+---
+
+## 🔄 Application Workflow
+
+1. User selects/searches for a stock.
+2. Historical stock data is collected from the configured data source.
+3. The data is cleaned and prepared for analysis.
+4. Historical time-series observations are passed to the ML pipeline.
+5. The model learns patterns from the available historical data.
+6. Future stock values/trends are predicted.
+7. Historical and predicted values are displayed on the dashboard.
+
+---
+
+## 🎯 Objective
+
+The project was developed to explore the practical application of **machine learning to financial time-series data** while building a complete ML-powered web application.
+
+Rather than implementing machine learning as an isolated notebook, the project integrates the **data pipeline, predictive model, backend, database, and visualization layer** into a single deployable application.
+
+---
+
+## ⚠️ Disclaimer
+
+Stock market prediction is inherently uncertain and influenced by numerous external factors. The predictions generated by this project are intended for **educational and experimental purposes only** and should not be considered financial advice or used as the sole basis for investment decisions.
+
+---
+
+## 🔮 Future Improvements
+
+* Compare multiple forecasting approaches
+* Hyperparameter tuning and model optimization
+* Additional technical indicators as model features
+* Model performance evaluation using appropriate time-series metrics
+* Longer-horizon forecasting
+* Automated model retraining as new market data becomes available
+* Deployment as a cloud-hosted ML application
+
+---
+
+## 👩‍💻 Author
+
+**Aditi Singh**
+
+B.Tech Computer Science & Engineering
